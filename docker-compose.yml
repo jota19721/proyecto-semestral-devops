@@ -1,0 +1,83 @@
+services:
+  mysql-ventas:
+    image: mysql:8.0
+    container_name: mysql-ventas
+    environment:
+      MYSQL_DATABASE: ventasdb
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_ventas_data:/var/lib/mysql
+    networks:
+      - smartlogix-net
+
+  mysql-despachos:
+    image: mysql:8.0
+    container_name: mysql-despachos
+    environment:
+      MYSQL_DATABASE: despachosdb
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_despachos_data:/var/lib/mysql
+    networks:
+      - smartlogix-net
+
+  back-ventas:
+    image: back-ventas
+    container_name: back-ventas
+    restart: on-failure
+    depends_on:
+      - mysql-ventas
+    environment:
+      DB_ENDPOINT: mysql-ventas
+      DB_PORT: 3306
+      DB_NAME: ventasdb
+      DB_USERNAME: user
+      DB_PASSWORD: password
+    ports:
+      - "8081:8080"
+    networks:
+      - smartlogix-net
+
+  back-despachos:
+    image: back-despachos
+    container_name: back-despachos
+    restart: on-failure
+    depends_on:
+      - mysql-despachos
+    environment:
+      DB_ENDPOINT: mysql-despachos
+      DB_PORT: 3306
+      DB_NAME: despachosdb
+      DB_USERNAME: user
+      DB_PASSWORD: password
+    ports:
+      - "8082:8081"
+    networks:
+      - smartlogix-net
+
+  front-despacho:
+    image: front-despacho
+    container_name: front-despacho
+    depends_on:
+      - back-ventas
+      - back-despachos
+    ports:
+      - "8080:80"
+    networks:
+      - smartlogix-net
+
+volumes:
+  mysql_ventas_data:
+  mysql_despachos_data:
+
+networks:
+  smartlogix-net:
+    driver: bridge
